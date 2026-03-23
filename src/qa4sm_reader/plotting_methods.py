@@ -1516,6 +1516,21 @@ def boxplot(
                             **kwargs)
             capsizing(cen, n_lines = n_lines)
 
+            # Annotate the central box median directly on the median line.
+            median_value = data["value"].median()
+            if not np.isnan(median_value):
+                ax.text(position,
+                        median_value,
+                        f"{median_value:.3g}",
+                        ha="center",
+                        va="center",
+                        fontsize=globals.fontsize_ticklabel,
+                        zorder=5,
+                        bbox=dict(boxstyle="round,pad=0.15",
+                                  facecolor="white",
+                                  edgecolor="none",
+                                  alpha=0.75))
+
             if ci:
                 c_lower = palette[ax_combos[i]] if new_coloring else"#87CFEBAA"
                 c_upper = palette[ax_combos[i]] if new_coloring else'#FF6347AA'
@@ -1582,7 +1597,10 @@ def boxplot(
                     loc=th.best_legend_pos_exclude_list(ax))
 
         positions = np.arange(len(ax_combos))
-        ticklabels = values["label"].unique()[ax_i*globals.n_boxplots_in_row:(ax_i+1)*globals.n_boxplots_in_row]
+        ticklabels = [
+            lbl.split("\n")[0]
+            for lbl in values["label"].unique()[ax_i*globals.n_boxplots_in_row:(ax_i+1)*globals.n_boxplots_in_row]
+        ]
         ax.set_xticks(positions)
         ax.set_xticklabels(ticklabels)
         ax.tick_params(labelsize=globals.fontsize_ticklabel)

@@ -129,7 +129,7 @@ rel_to_plot = ["front", "bg", "side"] # Possible positions relative to ax
 va_l = ["lower", "center", "upper"] # Possible vertical alignment
 ha_l = ["left", "center", "right"] # Possible horizontal alignment
 
-draw_logo = True
+draw_logo = False
 logo_position = 'front_lower_right' # of format rel_to_plot[i]+"_"+va_l[j]+"_"+ha_l[k]
 n_col_logo = 1 # Number of columns forlogos
 n_logo = n_col_logo*1 # Number of logos to draw for position in ["bg", "in_front"]
