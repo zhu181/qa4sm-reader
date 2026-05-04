@@ -13,11 +13,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+
 def plot_comparison(comparison_periods, 
                     filepath, 
                     out_dir=None, 
                     out_type = 'png', 
-                    metrics = None):
+                    metrics = None,
+                    val_type="temporal"):
     """
     Generate clustered comparison boxplots for given metrics across comparison periods.
 
@@ -41,6 +43,9 @@ def plot_comparison(comparison_periods,
     metrics : dict
         Dictionary of metrics available for plotting, 
         typically provided by the validation framework.
+    val_type: str, optional (default: 'temporal')
+        'temporal' creates graphs for temporal validation
+        'spatial' creates graphs for spatial validation
 
     Returns
     -------
@@ -59,12 +64,14 @@ def plot_comparison(comparison_periods,
                             period=comparison_periods[0],
                             ignore_empty=True,
                             metrics=metrics,
-                            engine='h5netcdf')
+                            engine='h5netcdf',
+                            val_type=val_type)
     if globals.DEFAULT_TSW in comparison_periods and len(comparison_periods) > 1:
         #check if stability metrics where calculated
         stability = all(item.isdigit() for item in comparison_periods if item != 'bulk')
         cbp = QA4SMCompPlotter(filepath)
         comparison_boxplot_dir = os.path.join(out_dir, globals.CLUSTERED_BOX_PLOT_OUTDIR)
+        comparison_boxplot_dir = os.path.join(comparison_boxplot_dir, val_type) if val_type in ['spatial'] else comparison_boxplot_dir
         os.makedirs(comparison_boxplot_dir, exist_ok=True)
 
         for available_metric in cbp.metric_kinds_available:
@@ -83,6 +90,7 @@ def plot_comparison(comparison_periods,
                 fnames_cbplot.extend(spth)
     return fnames_cbplot
 
+
 def plot_all(filepath: str,
              temporal_sub_windows: List[str] = None,
              metrics: list = None,
@@ -92,6 +100,7 @@ def plot_all(filepath: str,
              save_all: bool = True,
              save_metadata: Union[str, bool] = 'never',
              save_csv: bool = True,
+             val_type: str = "temporal",
              engine: str = 'h5netcdf',
              **plotting_kwargs) -> Tuple[List[str], List[str], List[str], List[str]]:
     """
@@ -100,15 +109,15 @@ def plot_all(filepath: str,
 
     Parameters
     ----------
-    filepath : str
+    filepath: str
         path to the *.nc file to be processed.
     temporal_sub_windows : List[str], optional (default: None)
         List of temporal sub-windows to be processed. If None, all periods present are automatically extracted from the file.
-    metrics : set or list, optional (default: None)
+    metrics: set or list, optional (default: None)
         metrics to be plotted. If None, all metrics with data are plotted
-    extent : tuple, optional (default: None)
+    extent: tuple, optional (default: None)
         Area to subset the values for -> (min_lon, max_lon, min_lat, max_lat)
-    out_dir : str, optional (default: None)
+    out_dir: str, optional (default: None)
         Path to output generated plot. If None, defaults to the current working directory.
     out_type: str or list
         extensions which the files should be saved in
@@ -124,8 +133,11 @@ def plot_all(filepath: str,
                                of points is above the `meta_boxplot_min_size`
                                threshold from globals.py. Otherwise a warning
                                is printed.
-    save_csv: bool, optional. Default is True.
+    save_csv: bool, optional (default: True)
         save a .csv file with the validation statistics
+    val_type: str, optional (default: 'temporal')
+        'temporal' creates graphs for temporal validation
+        'spatial' creates graphs for spatial validation
     engine: str, optional (default: h5netcdf)
         Engine used by xarray to read data from file. For qa4sm this should
         be h5netcdf.
@@ -158,7 +170,8 @@ def plot_all(filepath: str,
 
     comparison_periods = None
     if temporal_sub_windows is None:
-        periods = Pytesmo2Qa4smResultsTranscriber.get_tsws_from_ncfile(filepath)
+        periods = Pytesmo2Qa4smResultsTranscriber.get_tsws_from_ncfile(
+            filepath)
     else:
         periods = np.array(temporal_sub_windows)
     # Filter out all items that are purely digits 
@@ -173,11 +186,14 @@ def plot_all(filepath: str,
             period=period,
             extent=extent,
             ignore_empty=True,
+            val_type=val_type,
             engine=engine,
         )
+        period_outdir = os.path.join(out_dir, str(period)) if period else out_dir
+        period_outdir = os.path.join(period_outdir, val_type) if val_type in ['spatial'] else period_outdir
         plotter = QA4SMPlotter(
             image=img,
-            out_dir=os.path.join(out_dir, str(period)) if period else out_dir)
+            out_dir=period_outdir)
 
         if metrics is None:
             metrics = img.metrics
@@ -195,7 +211,7 @@ def plot_all(filepath: str,
                 fnames_bplot.extend(metric_bplots)
             if metric_mapplots:
                 fnames_mapplot.extend(metric_mapplots)
-            if img.metadata and (save_metadata != 'never'):
+            if img.metadata and (save_metadata != 'never') and (img.val_type in ["temporal"]):
                 if save_metadata == 'always':
                     kwargs = {'meta_boxplot_min_samples': 0}
                 else:
@@ -209,8 +225,11 @@ def plot_all(filepath: str,
 
                 fnames_bplot.extend(
                     plotter.plot_save_metadata(metric,
-                                               out_types=out_type,
-                                               **kwargs))
+                                            out_types=out_type,
+                                            **kwargs))
+        if (img.val_type in ["spatial"]) and (img.df_gpi is not None) and (save_metadata != 'never'):
+            fnames_mapplot.extend(plotter.plot_save_metadata_spatial(out_type=out_type, 
+                                               period=period))
 
         if save_csv:
             out_csv = plotter.save_stats(period=period)
@@ -218,7 +237,12 @@ def plot_all(filepath: str,
 
     #$$
     # ? move somewhere else?
-    fnames_cbplot = plot_comparison(comparison_periods, filepath, out_dir, out_type, metrics)
+    fnames_cbplot = plot_comparison(comparison_periods, 
+                                    filepath, 
+                                    out_dir, 
+                                    out_type, 
+                                    metrics, 
+                                    val_type=val_type)
     # fnames_cbplot = []
     # if isinstance(out_type, str):
     #     out_type = [out_type]

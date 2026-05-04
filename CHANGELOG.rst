@@ -5,6 +5,17 @@ Changelog
 Unreleased changes in master branch
 ===================================
 
+Version 0.12.3
+==============
+- Add timeseries plots for spatial validation
+- Fix triple collocation plot titles and status filenames
+- Exclude metadata-plots for triple collocation metrics
+
+Version 0.12.2
+==============
+- Add Zarr-file creation to netcdf_transcription.py
+- Update project dependencies
+
 Version 0.12.1
 ==============
 - Bugfix comparison module boxplot creation

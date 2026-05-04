@@ -385,8 +385,6 @@ class QA4SMVariable():
 
         self.metric, self.g, self.parts = self._parse_varname()
         self.Datasets = QA4SMDatasets(self.attrs)
-        self.attrs["val_is_scattered_data"] = True if self.attrs.get("val_is_scattered_data") \
-            or self.attrs.get(self.attrs.get('val_ref')) in globals.scattered_datasets else False
 
     def initialize(self):
         """Initialize the subclass for the variable type (metric, CI or metadata)"""
@@ -502,7 +500,7 @@ class ConfidenceInterval(QA4SMVariable, MixinVarmeta):
         self.bound = self.parts["bound"]
 
 
-class Metadata(QA4SMVariable):
+class Metadata(QA4SMVariable, MixinVarmeta):
     """Class for a MetricVariable representing metadata (only with ISMN as reference)"""
 
     def __init__(self, varname, global_attrs, values=None):
