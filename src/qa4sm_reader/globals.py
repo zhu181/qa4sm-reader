@@ -37,10 +37,10 @@ color_palette_combinations = extra_colors + [c for i, c in enumerate(palette) if
 color_palette_combinations_2 = sns.color_palette("Dark2") #if more combinations than len(color_palette_combinations)
 
 # === font defaults ===
-fontsize_title = 18
-fontsize_label = 16
-fontsize_ticklabel = 12
-fontsize_legend = 12
+fontsize_title = 24
+fontsize_label = 24
+fontsize_ticklabel = 20
+fontsize_legend = 20
 
 # === Aggregate subplots defaults ===
 n_col_agg = 2
