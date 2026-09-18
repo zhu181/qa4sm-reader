@@ -495,7 +495,7 @@ def style_map(
     add_coastline=True,
     add_land=True,
     add_water=True,
-    add_borders=True,
+    add_borders=False,
     add_us_states=False,
     grid_intervals=globals.grid_intervals,
     grid_tick_size=None,
